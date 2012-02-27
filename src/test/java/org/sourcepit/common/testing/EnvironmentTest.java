@@ -48,6 +48,14 @@ public class EnvironmentTest
       assertThat(env.getMavenHome(), IsNull.nullValue());
 
       
+      // PATH
+      File file = new File("src/test/resources/maven.home/bin/");
+      assertTrue(file.exists());
+      
+      envs.put("PATH", "foo" + File.pathSeparator + file.getPath() + File.pathSeparator + "murks/bin");
+      assertThat(env.getMavenHome(), IsEqual.equalTo(file.getParentFile()));
+
+      
       // ENV
       envs.put("MAVEN_HOME", "maven-home-1");
       assertThat(env.getMavenHome(), IsEqual.equalTo(new File("maven-home-1")));
@@ -61,15 +69,7 @@ public class EnvironmentTest
       envs.put("M3_HOME", "maven-home-4");
       assertThat(env.getMavenHome(), IsEqual.equalTo(new File("maven-home-4")));
 
-
-      // PATH
-      File file = new File("src/test/resources/maven.home/bin/");
-      assertTrue(file.exists());
-
-      envs.put("PATH", "foo" + File.pathSeparator + file.getPath() + File.pathSeparator + "murks/bin");
-      assertThat(env.getMavenHome(), IsEqual.equalTo(file.getParentFile()));
-
-
+      
       // props
       properties.setProperty("maven.home", "foo");
       assertThat(env.getMavenHome(), IsEqual.equalTo(new File("foo")));

@@ -44,7 +44,7 @@ public class Workspace extends ExternalResource
       {
          className = className.substring(idx + 1);
       }
-      path = "test-workspaces/" + className + "/" + description.getMethodName();
+      path = className + "/" + description.getMethodName();
       return super.apply(base, description);
    }
 

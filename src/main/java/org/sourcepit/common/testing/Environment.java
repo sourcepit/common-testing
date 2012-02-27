@@ -10,7 +10,9 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Properties;
 
 /**
@@ -38,14 +40,14 @@ public final class Environment
 
    private Environment()
    {
-      this(System.getenv(), loadProperties());
+      this(System.getenv(), loadProperties("osgiy-its.properties"));
    }
 
-   private static Properties loadProperties()
+   private static Properties loadProperties(String path)
    {
       Properties properties = new Properties();
       ClassLoader cl = Environment.class.getClassLoader();
-      InputStream is = cl.getResourceAsStream("osgiy-its.properties");
+      InputStream is = cl.getResourceAsStream(path);
       if (is != null)
       {
          try
@@ -73,26 +75,14 @@ public final class Environment
       this.properties = properties;
    }
 
-   public Map<String, String> newEnvironmentVariables()
+   public Map<String, String> newEnvs()
    {
-      final Map<String, String> environment = new HashMap<String, String>(System.getenv());
-
-      final String mavenDir = getProperty("maven-dir");
-      if (mavenDir != null)
-      {
-         environment.put("M2_HOME", mavenDir);
-      }
-
-      final String mavenOpts = getProperty("maven-opts");
-      if (mavenOpts != null)
-      {
-         environment.put("MAVEN_OPTS", mavenOpts);
-      }
+      final Map<String, String> envs = new LinkedHashMap<String, String>(this.envs);
 
       final String javaagent = System.getProperty("javaagent");
       if (javaagent != null)
       {
-         String mvnOpts = environment.get("MAVEN_OPTS");
+         String mvnOpts = envs.get("MAVEN_OPTS");
          if (mvnOpts == null)
          {
             mvnOpts = javaagent;
@@ -101,36 +91,10 @@ public final class Environment
          {
             mvnOpts = (mvnOpts + " " + javaagent).trim();
          }
-         environment.put("MAVEN_OPTS", mvnOpts);
+         envs.put("MAVEN_OPTS", mvnOpts);
       }
 
-      String userHome = getProperty("user-home");
-      if (userHome != null)
-      {
-         userHome = "-Duser.home=" + userHome;
-         String mvnOpts = environment.get("MAVEN_OPTS");
-         if (mvnOpts == null)
-         {
-            mvnOpts = userHome;
-         }
-         else
-         {
-            mvnOpts = (mvnOpts + " " + userHome).trim();
-         }
-         environment.put("MAVEN_OPTS", mvnOpts);
-      }
-
-      final String javaDir = getProperty("java-dir");
-      if (javaDir != null)
-      {
-         environment.put("JAVA_HOME", javaDir);
-      }
-      else
-      {
-         environment.put("JAVA_HOME", System.getProperty("java.home"));
-      }
-
-      return environment;
+      return envs;
    }
 
    public String getProperty(String name)
@@ -173,19 +137,20 @@ public final class Environment
       return getPropertyAsFile("user.home", true);
    }
 
-   public File getOutputDir()
+   public File getBuildDir()
    {
-      return getPropertyAsFile("output-dir", true);
-   }
-
-   public File getMavenDir()
-   {
-      return getPropertyAsFile("maven-dir", true);
+      return getPropertyAsFile("build.dir", true);
    }
 
    public File getMavenHome()
    {
       String mvnHome = getProperty("maven.home");
+      if (mvnHome != null)
+      {
+         return new File(mvnHome);
+      }
+
+      mvnHome = getEnv("M3_HOME", "M2_HOME", "MVN_HOME", "MAVEN_HOME");
       if (mvnHome != null)
       {
          return new File(mvnHome);
@@ -199,12 +164,6 @@ public final class Environment
          {
             return mavenHome;
          }
-      }
-
-      mvnHome = getEnv("M3_HOME", "M2_HOME", "MVN_HOME", "MAVEN_HOME");
-      if (mvnHome != null)
-      {
-         return new File(mvnHome);
       }
 
       return null;
@@ -250,5 +209,36 @@ public final class Environment
    public File getJavaHome()
    {
       return getPropertyAsFile("java.home", false);
+   }
+
+   private static final Map<String, Environment> environments = new HashMap<String, Environment>();
+
+   public static Environment get(String name)
+   {
+      synchronized (environments)
+      {
+         Environment environment = environments.get(name);
+         if (environment == null)
+         {
+            final Properties properties = new Properties();
+            properties.putAll(System.getProperties());
+            properties.putAll(loadProperties(name + ".env"));
+
+            final Map<String, String> envs = new LinkedHashMap<String, String>(System.getenv());
+            for (Entry<Object, Object> entry : properties.entrySet())
+            {
+               String key = entry.getKey().toString();
+               if (key.startsWith("env.") && key.length() > 4)
+               {
+                  key = key.substring(4);
+                  final Object value = entry.getValue();
+                  envs.put(key, value == null ? null : value.toString());
+               }
+            }
+            environment = new Environment(envs, properties);
+            environments.put(name, environment);
+         }
+         return environment;
+      }
    }
 }
