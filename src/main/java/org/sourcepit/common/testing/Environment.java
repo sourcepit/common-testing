@@ -20,28 +20,56 @@ import java.util.Properties;
  */
 public final class Environment
 {
-   private static final class Holder
+   private static final Map<String, Environment> environments = new HashMap<String, Environment>();
+
+   public static Environment getSystem()
    {
-      private final static Environment INSTANCE = new Environment();
+      return get(null);
    }
 
-   public static Environment getInstance()
+   public static Environment get(String path)
    {
-      return Holder.INSTANCE;
+      synchronized (environments)
+      {
+         Environment environment = environments.get(path);
+         if (environment == null)
+         {
+            environment = newEnvironment(path);
+            environments.put(path, environment);
+         }
+         return environment;
+      }
    }
 
-   public static Environment getSystemEnvironment()
+   public static Environment newEnvironment(String path)
    {
-      return new Environment(System.getenv(), System.getProperties());
+      final Properties properties = new Properties();
+      properties.putAll(System.getProperties());
+      if (path != null)
+      {
+         properties.putAll(loadProperties(path));
+      }
+      return newEnvironment(new LinkedHashMap<String, String>(System.getenv()), properties);
+   }
+
+   public static Environment newEnvironment(final Map<String, String> envs, final Properties properties)
+   {
+      for (Entry<Object, Object> entry : properties.entrySet())
+      {
+         String key = entry.getKey().toString();
+         if (key.startsWith("env.") && key.length() > 4)
+         {
+            key = key.substring(4);
+            final Object value = entry.getValue();
+            envs.put(key, value == null ? null : value.toString());
+         }
+      }
+
+      return new Environment(envs, properties);
    }
 
    private final Map<String, String> envs;
    private final Properties properties;
-
-   private Environment()
-   {
-      this(System.getenv(), loadProperties("osgiy-its.properties"));
-   }
 
    private static Properties loadProperties(String path)
    {
@@ -69,7 +97,7 @@ public final class Environment
       return properties;
    }
 
-   public Environment(Map<String, String> envs, Properties properties)
+   private Environment(Map<String, String> envs, Properties properties)
    {
       this.envs = envs;
       this.properties = properties;
@@ -95,6 +123,13 @@ public final class Environment
       }
 
       return envs;
+   }
+
+   public Properties newProperties()
+   {
+      final Properties props = new Properties();
+      props.putAll(properties);
+      return props;
    }
 
    public String getProperty(String name)
@@ -203,42 +238,11 @@ public final class Environment
 
    public boolean isDebugAllowed()
    {
-      return Boolean.TRUE.toString().equals(getProperty("debug-allowed"));
+      return Boolean.TRUE.toString().equals(getProperty("debug.allowed"));
    }
 
    public File getJavaHome()
    {
       return getPropertyAsFile("java.home", false);
-   }
-
-   private static final Map<String, Environment> environments = new HashMap<String, Environment>();
-
-   public static Environment get(String name)
-   {
-      synchronized (environments)
-      {
-         Environment environment = environments.get(name);
-         if (environment == null)
-         {
-            final Properties properties = new Properties();
-            properties.putAll(System.getProperties());
-            properties.putAll(loadProperties(name + ".env"));
-
-            final Map<String, String> envs = new LinkedHashMap<String, String>(System.getenv());
-            for (Entry<Object, Object> entry : properties.entrySet())
-            {
-               String key = entry.getKey().toString();
-               if (key.startsWith("env.") && key.length() > 4)
-               {
-                  key = key.substring(4);
-                  final Object value = entry.getValue();
-                  envs.put(key, value == null ? null : value.toString());
-               }
-            }
-            environment = new Environment(envs, properties);
-            environments.put(name, environment);
-         }
-         return environment;
-      }
    }
 }
