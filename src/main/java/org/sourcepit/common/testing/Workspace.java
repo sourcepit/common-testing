@@ -30,6 +30,11 @@ public class Workspace extends ExternalResource
       this(null, true);
    }
 
+   public Workspace(File baseDir, String path, boolean delete)
+   {
+      this(new File(baseDir, path), delete);
+   }
+   
    public Workspace(File baseDir, boolean delete)
    {
       this.baseDir = baseDir;
