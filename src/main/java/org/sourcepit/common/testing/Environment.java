@@ -176,6 +176,11 @@ public final class Environment
    {
       return getPropertyAsFile("build.dir", true);
    }
+   
+   public File getResourcesDir()
+   {
+      return getPropertyAsFile("resources.dir", true);
+   }
 
    public File getMavenHome()
    {
