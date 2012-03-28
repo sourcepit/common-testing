@@ -110,6 +110,10 @@ public class Workspace extends ExternalResource
    public File newFile(String fileName) throws IOException
    {
       File file = new File(getRoot(), fileName);
+      if (!file.getParentFile().exists())
+      {
+         file.getParentFile().mkdirs();
+      }
       file.createNewFile();
       return file;
    }
