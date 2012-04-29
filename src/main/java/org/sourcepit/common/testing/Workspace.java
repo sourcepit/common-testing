@@ -34,7 +34,7 @@ public class Workspace extends ExternalResource
    {
       this(new File(baseDir, path), delete);
    }
-   
+
    public Workspace(File baseDir, boolean delete)
    {
       this.baseDir = baseDir;
@@ -151,20 +151,27 @@ public class Workspace extends ExternalResource
       return createdDir;
    }
 
+   public File importFileOrDir(File file) throws IOException
+   {
+      if (file.isDirectory())
+      {
+         return importDir(file);
+      }
+      return importFile(file);
+   }
+
+   public File importFile(File srcFile) throws IOException
+   {
+      final File destFile = newFile(srcFile.getName());
+      FileUtils.forceDelete(destFile);
+      FileUtils.copyFile(srcFile, destFile);
+      return destFile;
+   }
+
    public File importDir(File dir) throws IOException
    {
-      File dst = newDir(dir.getName());
-      if (dst.isDirectory())
-      {
-         FileUtils.deleteDirectory(dst);
-      }
-      else if (dst.isFile())
-      {
-         if (!dst.delete())
-         {
-            throw new IOException("Can't delete file " + dst.toString());
-         }
-      }
+      final File dst = newDir(dir.getName());
+      FileUtils.forceDelete(dst);
       FileUtils.copyDirectory(dir, dst);
       return dst;
    }
