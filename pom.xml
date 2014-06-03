@@ -3,7 +3,7 @@
 	<parent>
 		<groupId>org.sourcepit</groupId>
 		<artifactId>srcpit-parent</artifactId>
-		<version>11</version>
+		<version>12</version>
 	</parent>
 	<groupId>org.sourcepit.common</groupId>
 	<artifactId>common-testing</artifactId>
