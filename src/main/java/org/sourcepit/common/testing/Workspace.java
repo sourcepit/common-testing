@@ -27,36 +27,30 @@ import org.junit.runners.model.Statement;
 /**
  * @author Bernd
  */
-public class Workspace extends ExternalResource
-{
+public class Workspace extends ExternalResource {
    private String path;
 
    private File baseDir, workspaceDir;
 
    private boolean delete;
 
-   public Workspace()
-   {
+   public Workspace() {
       this(null, true);
    }
 
-   public Workspace(File baseDir, String path, boolean delete)
-   {
+   public Workspace(File baseDir, String path, boolean delete) {
       this(new File(baseDir, path), delete);
    }
 
-   public Workspace(File baseDir, boolean delete)
-   {
+   public Workspace(File baseDir, boolean delete) {
       this.baseDir = baseDir;
       this.delete = delete;
    }
 
-   public Statement apply(Statement base, Description description)
-   {
+   public Statement apply(Statement base, Description description) {
       String className = description.getClassName();
       int idx = className.lastIndexOf('.');
-      if (idx > -1)
-      {
+      if (idx > -1) {
          className = className.substring(idx + 1);
       }
       path = className + "/" + description.getMethodName();
@@ -64,17 +58,13 @@ public class Workspace extends ExternalResource
    }
 
    @Override
-   protected void before() throws Exception
-   {
-      if (baseDir == null)
-      {
+   protected void before() throws Exception {
+      if (baseDir == null) {
          workspaceDir = newDir();
       }
-      else
-      {
+      else {
          workspaceDir = new File(baseDir, path);
-         if (workspaceDir.exists())
-         {
+         if (workspaceDir.exists()) {
             delete();
          }
          workspaceDir.mkdirs();
@@ -82,33 +72,26 @@ public class Workspace extends ExternalResource
    }
 
    @Override
-   protected void after()
-   {
-      if (delete)
-      {
+   protected void after() {
+      if (delete) {
          delete();
       }
       super.after();
    }
 
-   public void delete()
-   {
-      try
-      {
+   public void delete() {
+      try {
          FileUtils.deleteDirectory(workspaceDir);
       }
-      catch (IOException e)
-      {
+      catch (IOException e) {
       }
    }
 
    /**
     * @return the location of this workspace directory.
     */
-   public File getRoot()
-   {
-      if (workspaceDir == null)
-      {
+   public File getRoot() {
+      if (workspaceDir == null) {
          throw new IllegalStateException("the workspace directory has not yet been created");
       }
       return workspaceDir;
@@ -117,11 +100,9 @@ public class Workspace extends ExternalResource
    /**
     * Returns a new fresh file with the given name under the workspace directory.
     */
-   public File newFile(String fileName) throws IOException
-   {
+   public File newFile(String fileName) throws IOException {
       File file = new File(getRoot(), fileName);
-      if (!file.getParentFile().exists())
-      {
+      if (!file.getParentFile().exists()) {
          file.getParentFile().mkdirs();
       }
       file.createNewFile();
@@ -131,19 +112,16 @@ public class Workspace extends ExternalResource
    /**
     * Returns a new fresh file with a random name under the workspace directory.
     */
-   public File newFile() throws IOException
-   {
+   public File newFile() throws IOException {
       return File.createTempFile("file", null, workspaceDir);
    }
 
    /**
     * Returns a new fresh directory with the given name under the workspace directory.
     */
-   public File newDir(String... dirNames)
-   {
+   public File newDir(String... dirNames) {
       File file = getRoot();
-      for (String dirName : dirNames)
-      {
+      for (String dirName : dirNames) {
          file = new File(file, dirName);
          file.mkdir();
       }
@@ -153,33 +131,28 @@ public class Workspace extends ExternalResource
    /**
     * Returns a new fresh directory with a random name under the workspace directory.
     */
-   public File newDir() throws IOException
-   {
+   public File newDir() throws IOException {
       File createdDir = File.createTempFile("junit", "", workspaceDir);
       createdDir.delete();
       createdDir.mkdir();
       return createdDir;
    }
 
-   public File importFileOrDir(File file) throws IOException
-   {
-      if (file.isDirectory())
-      {
+   public File importFileOrDir(File file) throws IOException {
+      if (file.isDirectory()) {
          return importDir(file);
       }
       return importFile(file);
    }
 
-   public File importFile(File srcFile) throws IOException
-   {
+   public File importFile(File srcFile) throws IOException {
       final File destFile = newFile(srcFile.getName());
       FileUtils.forceDelete(destFile);
       FileUtils.copyFile(srcFile, destFile);
       return destFile;
    }
 
-   public File importDir(File dir) throws IOException
-   {
+   public File importDir(File dir) throws IOException {
       final File dst = newDir(dir.getName());
       FileUtils.forceDelete(dst);
       FileUtils.copyDirectory(dir, dst);

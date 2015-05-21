@@ -34,12 +34,10 @@ import org.junit.Test;
 /**
  * @author Bernd Vogt <bernd.vogt@sourcepit.org>
  */
-public class EnvironmentTest
-{
+public class EnvironmentTest {
 
    @Test
-   public void testSystemProperties()
-   {
+   public void testSystemProperties() {
       Environment env = Environment.newEnvironment(System.getenv(), System.getProperties());
       assertThat(env, IsNull.notNullValue());
 
@@ -51,8 +49,7 @@ public class EnvironmentTest
    }
 
    @Test
-   public void testMavenHome()
-   {
+   public void testMavenHome() {
       Map<String, String> envs = new HashMap<String, String>();
       Properties properties = new Properties();
       Environment env = Environment.newEnvironment(envs, properties);
@@ -86,36 +83,30 @@ public class EnvironmentTest
    }
 
    @Test
-   public void testDefault()
-   {
+   public void testDefault() {
       Environment systemEnv = Environment.getSystem();
       Environment defaultEnv = Environment.get(null);
       assertThat(systemEnv, IsSame.sameInstance(defaultEnv));
 
       Map<String, String> envs = systemEnv.newEnvs();
-      for (Entry<String, String> entry : System.getenv().entrySet())
-      {
-         if ("MAVEN_OPTS".equals(entry.getKey()) && System.getProperty("javaagent") != null)
-         {
+      for (Entry<String, String> entry : System.getenv().entrySet()) {
+         if ("MAVEN_OPTS".equals(entry.getKey()) && System.getProperty("javaagent") != null) {
             assertThat(entry.getValue() + " " + System.getProperty("javaagent"),
                IsEqual.equalTo(envs.get(entry.getKey())));
          }
-         else
-         {
+         else {
             assertThat(entry.getValue(), IsEqual.equalTo(envs.get(entry.getKey())));
          }
       }
 
       Map<Object, Object> props = systemEnv.newProperties();
-      for (Entry<Object, Object> entry : System.getProperties().entrySet())
-      {
+      for (Entry<Object, Object> entry : System.getProperties().entrySet()) {
          assertThat(entry.getValue(), IsEqual.equalTo(props.get(entry.getKey())));
       }
    }
 
    @Test
-   public void testEnvProperty()
-   {
+   public void testEnvProperty() {
       Map<String, String> envs = new HashMap<String, String>();
       envs.put("FOO", "bar");
       envs.put("USER", "yoda");

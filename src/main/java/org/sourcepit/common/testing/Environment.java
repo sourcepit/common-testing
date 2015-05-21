@@ -28,22 +28,17 @@ import java.util.Properties;
 /**
  * @author Bernd
  */
-public final class Environment
-{
+public final class Environment {
    private static final Map<String, Environment> environments = new HashMap<String, Environment>();
 
-   public static Environment getSystem()
-   {
+   public static Environment getSystem() {
       return get(null);
    }
 
-   public static Environment get(String path)
-   {
-      synchronized (environments)
-      {
+   public static Environment get(String path) {
+      synchronized (environments) {
          Environment environment = environments.get(path);
-         if (environment == null)
-         {
+         if (environment == null) {
             environment = newEnvironment(path);
             environments.put(path, environment);
          }
@@ -51,24 +46,19 @@ public final class Environment
       }
    }
 
-   public static Environment newEnvironment(String path)
-   {
+   public static Environment newEnvironment(String path) {
       final Properties properties = new Properties();
       properties.putAll(System.getProperties());
-      if (path != null)
-      {
+      if (path != null) {
          properties.putAll(loadProperties(path));
       }
       return newEnvironment(new LinkedHashMap<String, String>(System.getenv()), properties);
    }
 
-   public static Environment newEnvironment(final Map<String, String> envs, final Properties properties)
-   {
-      for (Entry<Object, Object> entry : properties.entrySet())
-      {
+   public static Environment newEnvironment(final Map<String, String> envs, final Properties properties) {
+      for (Entry<Object, Object> entry : properties.entrySet()) {
          String key = entry.getKey().toString();
-         if (key.startsWith("env.") && key.length() > 4)
-         {
+         if (key.startsWith("env.") && key.length() > 4) {
             key = key.substring(4);
             final Object value = entry.getValue();
             envs.put(key, value == null ? null : value.toString());
@@ -81,52 +71,41 @@ public final class Environment
    private final Map<String, String> envs;
    private final Properties properties;
 
-   private static Properties loadProperties(String path)
-   {
+   private static Properties loadProperties(String path) {
       Properties properties = new Properties();
       ClassLoader cl = Environment.class.getClassLoader();
       InputStream is = cl.getResourceAsStream(path);
-      if (is != null)
-      {
-         try
-         {
-            try
-            {
+      if (is != null) {
+         try {
+            try {
                properties.load(is);
             }
-            finally
-            {
+            finally {
                is.close();
             }
          }
-         catch (IOException e)
-         {
+         catch (IOException e) {
             throw new IllegalStateException(e);
          }
       }
       return properties;
    }
 
-   private Environment(Map<String, String> envs, Properties properties)
-   {
+   private Environment(Map<String, String> envs, Properties properties) {
       this.envs = envs;
       this.properties = properties;
    }
 
-   public Map<String, String> newEnvs()
-   {
+   public Map<String, String> newEnvs() {
       final Map<String, String> envs = new LinkedHashMap<String, String>(this.envs);
 
       final String javaagent = properties.getProperty("javaagent");
-      if (javaagent != null)
-      {
+      if (javaagent != null) {
          String mvnOpts = envs.get("MAVEN_OPTS");
-         if (mvnOpts == null)
-         {
+         if (mvnOpts == null) {
             mvnOpts = javaagent;
          }
-         else
-         {
+         else {
             mvnOpts = (mvnOpts + " " + javaagent).trim();
          }
          envs.put("MAVEN_OPTS", mvnOpts);
@@ -135,83 +114,67 @@ public final class Environment
       return envs;
    }
 
-   public Properties newProperties()
-   {
+   public Properties newProperties() {
       final Properties props = new Properties();
       props.putAll(properties);
       return props;
    }
 
-   public String getProperty(String name)
-   {
+   public String getProperty(String name) {
       return properties.getProperty(name);
    }
 
-   public String getProperty(String name, String defaultValue)
-   {
+   public String getProperty(String name, String defaultValue) {
       return properties.getProperty(name, defaultValue);
    }
 
-   public String getProperty(String name, boolean required)
-   {
+   public String getProperty(String name, boolean required) {
       final String value = properties.getProperty(name);
-      if (required && value == null)
-      {
+      if (required && value == null) {
          throw new IllegalStateException("Property " + name + " is required but not set.");
       }
       return value;
    }
 
-   public File getPropertyAsFile(String name)
-   {
+   public File getPropertyAsFile(String name) {
       final String path = getProperty(name, false);
-      if (path == null)
-      {
+      if (path == null) {
          return null;
       }
       return new File(path);
    }
 
-   public File getPropertyAsFile(String name, boolean required)
-   {
+   public File getPropertyAsFile(String name, boolean required) {
       return new File(getProperty(name, required));
    }
 
-   public File getUserHome()
-   {
+   public File getUserHome() {
       return getPropertyAsFile("user.home", true);
    }
 
-   public File getBuildDir()
-   {
+   public File getBuildDir() {
       return getPropertyAsFile("build.dir", true);
    }
 
-   public File getResourcesDir()
-   {
+   public File getResourcesDir() {
       return getPropertyAsFile("resources.dir", true);
    }
 
-   public File getMavenHome()
-   {
+   public File getMavenHome() {
       String mvnHome = getProperty("maven.home");
-      if (mvnHome != null)
-      {
+      if (mvnHome != null) {
          return new File(mvnHome);
       }
 
       mvnHome = getEnv("M3_HOME", "M2_HOME", "MVN_HOME", "MAVEN_HOME");
-      if (mvnHome != null)
-      {
+      if (mvnHome != null) {
          return new File(mvnHome);
       }
 
       final String paths = envs.get("PATH");
-      if (paths != null)
-      {
+      if (paths != null) {
          final File mavenHome = getMavenHome(paths);
-         if (mavenHome != null)
-         {
+         if (mavenHome != null) {
             return mavenHome;
          }
       }
@@ -219,45 +182,36 @@ public final class Environment
       return null;
    }
 
-   private String getEnv(String... names)
-   {
-      for (String name : names)
-      {
+   private String getEnv(String... names) {
+      for (String name : names) {
          String env = envs.get(name);
-         if (env != null)
-         {
+         if (env != null) {
             return env;
          }
       }
       return null;
    }
 
-   private File getMavenHome(String paths)
-   {
+   private File getMavenHome(String paths) {
       final File m2ConfFile = findFileInPaths(paths, "m2.conf");
       return m2ConfFile == null ? null : m2ConfFile.getParentFile().getParentFile();
    }
 
-   private File findFileInPaths(String paths, final String name)
-   {
-      for (String path : paths.split(File.pathSeparator))
-      {
+   private File findFileInPaths(String paths, final String name) {
+      for (String path : paths.split(File.pathSeparator)) {
          final File file = new File(path, name);
-         if (file.exists())
-         {
+         if (file.exists()) {
             return file;
          }
       }
       return null;
    }
 
-   public boolean isDebugAllowed()
-   {
+   public boolean isDebugAllowed() {
       return Boolean.TRUE.toString().equals(getProperty("debug.allowed"));
    }
 
-   public File getJavaHome()
-   {
+   public File getJavaHome() {
       return getPropertyAsFile("java.home", false);
    }
 }
