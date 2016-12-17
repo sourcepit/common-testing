@@ -19,7 +19,7 @@
 	<parent>
 		<groupId>org.sourcepit</groupId>
 		<artifactId>srcpit-parent</artifactId>
-		<version>21</version>
+		<version>22-SNAPSHOT</version>
 	</parent>
 	<groupId>org.sourcepit.common</groupId>
 	<artifactId>common-testing</artifactId>
